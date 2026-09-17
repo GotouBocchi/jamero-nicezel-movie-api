@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+        }
+        #loadBtn {
+            margin-bottom: 25px;
+        }
+        button {
+            padding: 6px;
+        }
+        input {
+            padding: 6px;
+        }
+        h1 {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Movie Collection</h1>
+    <h2>Add Movie</h2>
+    <div>
+        <input type="text" id="titleInput" placeholder="Movie">
+        <input type="text" id="genreInput" placeholder="Genre">
+        <input type="text" id="yearInput" placeholder="Year">
+        <button id="addBtn">Add Movie</button>
+    </div>
+    <h3 id="successMsg" style="display:none;">Movie added successfully</h3>
+    <h2>Movies</h2>
+    <button id="loadBtn">Load Movies</button>
+    <table id="movieTable">
+        <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Genre</th>
+            <th>Year</th>
+        </tr>
+    </table>
+
+    <script>
+        const API_URL = '/api/movies';
+
+        const titleInput = document.getElementById('titleInput');
+        const genreInput = document.getElementById('genreInput');
+        const yearInput = document.getElementById('yearInput');
+        const addBtn = document.getElementById('addBtn');
+        const successMsg = document.getElementById('successMsg');
+        const movieTable = document.getElementById('movieTable');
+        const loadBtn = document.getElementById('loadBtn');
+
+        // Fetch all movies and render them in the table
+        async function loadMovies() {
+            const res = await fetch(API_URL);
+            const movies = await res.json();
+
+            // Remove all rows except the header row
+            movieTable.querySelectorAll('tr:not(:first-child)').forEach(row => row.remove());
+
+            movies.forEach(movie => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${movie.id}</td>
+                    <td>${movie.title}</td>
+                    <td>${movie.genre}</td>
+                    <td>${movie.year}</td>
+                `;
+                movieTable.appendChild(row);
+            });
+        }
+
+        // Add a new movie via POST, then refresh the list
+        async function addMovie() {
+            const title = titleInput.value.trim();
+            const genre = genreInput.value.trim();
+            const year = yearInput.value.trim();
+
+            successMsg.style.display = 'none';
+
+            if (!title || !genre || !year) {
+                alert('Please fill in all fields (Movie, Genre, Year).');
+                return;
+            }
+
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, genre, year })
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                alert(errorData.error || 'Failed to add movie.');
+                return;
+            }
+
+            // Clear inputs
+            titleInput.value = '';
+            genreInput.value = '';
+            yearInput.value = '';
+
+            successMsg.style.display = 'block';
+
+            // Refresh the movie list
+            loadMovies();
+        }
+
+        addBtn.addEventListener('click', addMovie);
+        loadBtn.addEventListener('click', loadMovies);
+    </script>
+</body>
+</html>
